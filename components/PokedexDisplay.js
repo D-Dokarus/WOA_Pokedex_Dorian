@@ -4,8 +4,8 @@ app.component('pokedex-display', {
     `<div class="pokedex-section">
         <filter-form @research-pokemon='getPokemon' @change-random='changeRandom'></filter-form>
         <div class="pokemons-container">
-            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" @click="pokemonClicked(index)" :class="{pokemonClick: pokemon.clicked, tileRed: index%2, tileBlue: (index+1)%2}">
-                <div class="pokemon-left">
+            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked, tileRed: index%2, tileBlue: (index+1)%2}">
+                <div class="pokemon-left" @click="pokemonClicked(index)">
                     <img class="pokemon-image" :src="pokemonImage(pokemon)" :alt="pokemon.name"/>
                     <div class="pokemon-description">
                         <h2 class="pokemon-name">{{ pokemonName(pokemon) }}</h2>
@@ -32,7 +32,7 @@ app.component('pokedex-display', {
             eachTime: 6,
             maxId: 898,
             isRandom: false,
-            currentId: 0,
+            currentId: 1,
             pokemons: [],
             traductionType: {"grass":"Plante", "poison":"Poison", "steel":"Acier", "fairy":"Fée", "fire":"Feu", "ice":"Glace", "rock":"Roche",
                 "ground":"Sol", "flying":"Vol", "water":"Eau", "bug":"Insecte", "psychic":"Psy", "dark":"Ténèbres", "dragon":"Dragon",
@@ -42,6 +42,7 @@ app.component('pokedex-display', {
     methods: {
         changeRandom() {
             this.isRandom = !this.isRandom
+            this.currentId = 1
             this.pokemons = []
             this.getMorePokemons()
         },
@@ -60,7 +61,7 @@ app.component('pokedex-display', {
                 this.getOrderPokemons()
         },
         getOrderPokemons() {
-            for(let i = this.currentId+1; i<=this.currentId+this.eachTime; i++)
+            for(let i = this.currentId; i<this.currentId+this.eachTime; i++)
                 this.getPokemonByValue(i)
             this.currentId += this.eachTime
         },
@@ -81,6 +82,8 @@ app.component('pokedex-display', {
                                     newData.moreData = data2
                                     newData.clicked = false
                                     this.pokemons.push(newData)
+                                    if(!this.isRandom)
+                                        this.sortData()
                                 })
                             }
                         })
@@ -146,22 +149,25 @@ app.component('pokedex-display', {
             const entries = pokemon.moreData.flavor_text_entries.filter(x => x.language.name == this.language)
             let entry = ""
             let as = Object.assign({}, entries.find(x => x.version.name == "alpha-sapphire")).flavor_text
-            entry += as == undefined ? "" : as
+            entry += as == undefined ? "" : " "+as
             let or = Object.assign({}, entries.find(x => x.version.name == "omega-ruby")).flavor_text
-            entry += or == undefined ? "" : or
+            entry += or == undefined || or == as? "" : " "+or
             let su = Object.assign({}, entries.find(x => x.version.name == "sun")).flavor_text
-            entry += su == undefined ? "" : su
+            entry += su == undefined ? "" : " "+su
             let mo = Object.assign({}, entries.find(x => x.version.name == "moon")).flavor_text
-            entry += mo == undefined ? "" : mo
+            entry += mo == undefined || mo == su? "" : " "+mo
             let sh = Object.assign({}, entries.find(x => x.version.name == "shield")).flavor_text
-            entry += sh == undefined ? "" : sh
+            entry += sh == undefined ? "" : " "+sh
             let sw = Object.assign({}, entries.find(x => x.version.name == "sword")).flavor_text
-            entry += sw == undefined ? "" : sw
+            entry += sw == undefined || sw == sh? "" : " "+sw
 
             return entry
         },
         pokemonClicked(index) {
             this.pokemons[index].clicked = !this.pokemons[index].clicked
+        },
+        sortData(a, b) {
+            this.pokemons.sort(function(a, b) {return a.id - b.id;});
         },
         capitalize(str) {
             return str.charAt(0).toUpperCase() + str.substring(1)

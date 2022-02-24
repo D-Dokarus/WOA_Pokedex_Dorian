@@ -1,12 +1,1 @@
-const app = Vue.createApp({
-    data: function() {
-        return {
-            searchValue: ''
-        }
-    },
-    methods: {
-        searchPokemon(value){
-            this.searchValue = value
-        }
-    }
-})
+const app = Vue.createApp({})
