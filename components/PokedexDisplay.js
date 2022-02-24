@@ -4,7 +4,7 @@ app.component('pokedex-display', {
     `<div class="pokedex-section">
         <filter-form @research-pokemon='getPokemon' @change-random='changeRandom'></filter-form>
         <div class="pokemons-container">
-            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked, tileRed: index%2, tileBlue: (index+1)%2}">
+            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked}">
                 <div class="pokemon-left" @click="pokemonClicked(index)">
                     <img class="pokemon-image" :src="pokemonImage(pokemon)" :alt="pokemon.name"/>
                     <div class="pokemon-description">
@@ -66,7 +66,7 @@ app.component('pokedex-display', {
             this.currentId += this.eachTime
         },
         getRandomPokemons() {
-            for(let i = 0; i<=this.eachTime; i++) {
+            for(let i = 0; i<this.eachTime; i++) {
                 let randId = Math.ceil((Math.random()*this.maxId))
                 this.getPokemonByValue(randId)
             }
