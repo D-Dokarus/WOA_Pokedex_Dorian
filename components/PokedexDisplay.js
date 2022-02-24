@@ -2,9 +2,9 @@ app.component('pokedex-display', {
     template:
     /*html*/
     `<div class="pokedex-section">
-        <filter-form @research-pokemon='getPokemon'></filter-form>
+        <filter-form @research-pokemon='getPokemon' @change-random='changeRandom'></filter-form>
         <div class="pokemons-container">
-            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" v-on:click="pokemonClicked(index)" :class="{pokemonClick: pokemon.clicked, tileRed: index%2, tileBlue: (index+1)%2}">
+            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" @click="pokemonClicked(index)" :class="{pokemonClick: pokemon.clicked, tileRed: index%2, tileBlue: (index+1)%2}">
                 <div class="pokemon-left">
                     <img class="pokemon-image" :src="pokemonImage(pokemon)" :alt="pokemon.name"/>
                     <div class="pokemon-description">
@@ -14,6 +14,8 @@ app.component('pokedex-display', {
                     </div>
                 </div>
                 <div class="pokemon-right">
+                    <p class="pokemon-english">{{ pokemonEnglish(pokemon) }}</p>
+                    <p class="pokemon-height">{{ pokemonHeight(pokemon) }}</p>
                     <p class="pokemon-weight">{{ pokemonWeight(pokemon) }}</p>
                     <p class="pokemon-desc">{{ pokemonDesc(pokemon) }}</p>
                 </div>
@@ -27,8 +29,10 @@ app.component('pokedex-display', {
         return {
             pokeapi: 'https://pokeapi.co/api/v2/',
             language: "fr",
-            nbRandom: 6,
+            eachTime: 6,
             maxId: 898,
+            isRandom: false,
+            currentId: 0,
             pokemons: [],
             traductionType: {"grass":"Plante", "poison":"Poison", "steel":"Acier", "fairy":"Fée", "fire":"Feu", "ice":"Glace", "rock":"Roche",
                 "ground":"Sol", "flying":"Vol", "water":"Eau", "bug":"Insecte", "psychic":"Psy", "dark":"Ténèbres", "dragon":"Dragon",
@@ -36,39 +40,56 @@ app.component('pokedex-display', {
         }
     },
     methods: {
-        getPokemon(value) {
-            if(value)
-                this.getPokemonByNameOrId(value)
-            else
-                this.getRandomPokemons()
-        },
-        getRandomPokemons() {
+        changeRandom() {
+            this.isRandom = !this.isRandom
             this.pokemons = []
             this.getMorePokemons()
         },
-        getMorePokemons() {
-            for(let i = 0; i<this.nbRandom; i++) {
-                let randId = Math.ceil((Math.random()*this.maxId))
-                fetch(this.pokeapi+'pokemon/'+ randId).then((res) => {
-                    if(res.ok) {
-                        res.json().then((data) => {
-                            fetch(this.pokeapi+'pokemon-species/'+ randId).then((res2) => {
-                                if(res2.ok) {
-                                    res2.json().then((data2) => {
-                                        let newData = data
-                                        newData.moreData = data2
-                                        newData.clicked = false
-                                        this.pokemons.push(newData)
-                                    })
-                                }
-                            })
-                        })
-                    }
-                })
-                .catch(function(error) {console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); });
+        getPokemon(value) {
+            if(value)
+                this.getOnePokemon(value)
+            else {
+                this.pokemons = []
+                this.getMorePokemons()
             }
         },
-        getPokemonByNameOrId(value) {
+        getMorePokemons() {
+            if(this.isRandom)
+                this.getRandomPokemons()
+            else
+                this.getOrderPokemons()
+        },
+        getOrderPokemons() {
+            for(let i = this.currentId+1; i<=this.currentId+this.eachTime; i++)
+                this.getPokemonByValue(i)
+            this.currentId += this.eachTime
+        },
+        getRandomPokemons() {
+            for(let i = 0; i<=this.eachTime; i++) {
+                let randId = Math.ceil((Math.random()*this.maxId))
+                this.getPokemonByValue(randId)
+            }
+        },
+        getPokemonByValue(value) {
+            fetch(this.pokeapi+'pokemon/'+ value).then((res) => {
+                if(res.ok) {
+                    res.json().then((data) => {
+                        fetch(this.pokeapi+'pokemon-species/'+ value).then((res2) => {
+                            if(res2.ok) {
+                                res2.json().then((data2) => {
+                                    let newData = data
+                                    newData.moreData = data2
+                                    newData.clicked = false
+                                    this.pokemons.push(newData)
+                                })
+                            }
+                        })
+                    })
+                }
+            })
+            .catch(function(error) {console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); });
+        },
+        getOnePokemon(value) {
             fetch(this.pokeapi+'pokemon/'+ value).then((res) => {
                 if(res.ok) {
                     res.json().then((data) => {
@@ -80,6 +101,7 @@ app.component('pokedex-display', {
                                     newData.clicked = false
                                     this.pokemons = []
                                     this.pokemons.push(newData)
+                                    this.currentId = parseInt(value)
                                 })
                             }
                         })
@@ -111,26 +133,41 @@ app.component('pokedex-display', {
             }
             return str
         },
+        pokemonEnglish(pokemon) {
+            return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name
+        },
+        pokemonHeight(pokemon) {
+            return "Taille : "+(pokemon.height)/10.0 +" m"
+        },
         pokemonWeight(pokemon) {
-            return "Poids : "+pokemon.weight +" Kg"
+            return "Poids : "+(pokemon.weight)/10.0 +" Kg"
         },
         pokemonDesc(pokemon) {
             const entries = pokemon.moreData.flavor_text_entries.filter(x => x.language.name == this.language)
-            let entry = entries.find(x => x.version.name == "shield") //Tous les pokémons de la 8ème génération
-            if(entry == undefined)
-                entry = entries.find(x => x.version.name == "alpha-sapphire") //Pour les autres (car pas tous les pokémons ont été intégrés)
+            let entry = ""
+            let as = Object.assign({}, entries.find(x => x.version.name == "alpha-sapphire")).flavor_text
+            entry += as == undefined ? "" : as
+            let or = Object.assign({}, entries.find(x => x.version.name == "omega-ruby")).flavor_text
+            entry += or == undefined ? "" : or
+            let su = Object.assign({}, entries.find(x => x.version.name == "sun")).flavor_text
+            entry += su == undefined ? "" : su
+            let mo = Object.assign({}, entries.find(x => x.version.name == "moon")).flavor_text
+            entry += mo == undefined ? "" : mo
+            let sh = Object.assign({}, entries.find(x => x.version.name == "shield")).flavor_text
+            entry += sh == undefined ? "" : sh
+            let sw = Object.assign({}, entries.find(x => x.version.name == "sword")).flavor_text
+            entry += sw == undefined ? "" : sw
 
-            entry = Object.assign({}, entry).flavor_text; //Car filter retourne un proxy
             return entry
         },
         pokemonClicked(index) {
             this.pokemons[index].clicked = !this.pokemons[index].clicked
-        }
-        /*capitalize(str) {
+        },
+        capitalize(str) {
             return str.charAt(0).toUpperCase() + str.substring(1)
-        }*/
+        }
     },
     mounted() {
-        this.getRandomPokemons()
+        this.getMorePokemons()
     }
   })

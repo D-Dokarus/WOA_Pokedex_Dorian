@@ -3,19 +3,33 @@ app.component('filter-form', {
     /*html*/
     `<div class="filter-menu">
         <form class="filter-form" @submit.prevent="onSubmit">
-            <h3>Rechercher un pokémon</h3>
-            <input id="name" v-model="name" placeholder="Nom ou id ...">
-            <input class="button" type="submit" value="Recherche">
+            <label>Rechercher un pokémon :</label>
+            <input id="name" v-model="name" placeholder="Nom ou N° de pokédex">
+            <input class="recherche" type="submit" value="Recherche">
         </form>
+        <button class="random-button" @click="changeRandom"> {{ randomButtonText }}</button>
     </div>`,
     data: function() {
       return {
-          name: ''
+          name: '',
+          isRandom: false
       }
     },
     methods: {
         onSubmit() {
             this.$emit('research-pokemon', this.name)
+        },
+        changeRandom() {
+            this.isRandom = !this.isRandom
+            this.$emit('change-random', this.name)
+        }
+    },
+    computed: {
+        randomButtonText() {
+            if(this.isRandom) 
+                return "Désactiver l'aléatoire"
+            else
+                return "Activer l'aléatoire"
         }
     }
   })
