@@ -59,6 +59,7 @@ button {
         -webkit-box-shadow: 0px 2px 15px -5px rgba(0, 0, 0, 0.57);
         -moz-box-shadow: 0px 2px 15px -5px rgba(0, 0, 0, 0.57);
         box-shadow: 0px 2px 15px -5px rgba(0, 0, 0, 0.57);
+        border-bottom: 2px solid black;
     }
     .filter-form #name {
         width: 200px;

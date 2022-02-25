@@ -72,69 +72,48 @@ app.component('pokedex-display', {
             }
         },
         getPokemonByValue(value) {
-            fetch(this.pokeapi+'pokemon/'+ value).then((res) => {
-                if(res.ok) {
-                    res.json().then((data) => {
-                        fetch(this.pokeapi+'pokemon-species/'+ value).then((res2) => {
-                            if(res2.ok) {
-                                res2.json().then((data2) => {
-                                    let newData = data
-                                    newData.moreData = data2
-                                    newData.clicked = false
-                                    this.pokemons.push(newData)
-                                    if(!this.isRandom)
-                                        this.sortData()
-                                })
-                            }
-                        })
-                    })
-                }
+            this.fetchByValue(value).then((data) => {                 
+                this.pokemons.push(data)
+                if(!this.isRandom)
+                    this.sortData()
             })
-            .catch(function(error) {console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); });
         },
         getOnePokemon(value) {
-            fetch(this.pokeapi+'pokemon/'+ value).then((res) => {
-                if(res.ok) {
-                    res.json().then((data) => {
-                        fetch(this.pokeapi+'pokemon-species/'+ value).then((res2) => {
-                            if(res2.ok) {
-                                res2.json().then((data2) => {                      
-                                    let newData = data
-                                    newData.moreData = data2
-                                    newData.clicked = false
-                                    this.pokemons = []
-                                    this.pokemons.push(newData)
-                                    this.currentId = parseInt(value)+1
-                                })
-                            }
-                        })
-                    })
-                }
-                else alert("Le nom ou l'id du pokémon est mauvais")
+            this.fetchByValue(value).then((data) => {                 
+                this.pokemons = []
+                this.pokemons.push(data)
+                this.currentId = parseInt(value)+1
             })
-            .catch(function(error) { console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); });
         },
-        pokemonImage(pokemon) {
-            return pokemon.sprites.other["official\-artwork"].front_default
+        async fetchByValue(value) {
+            return new Promise((resolve, reject) => {
+                fetch(this.pokeapi+'pokemon/'+ value).then((res) => {
+                    if(res.ok) {
+                        res.json().then((data) => {
+                            fetch(this.pokeapi+'pokemon-species/'+ value).then((res2) => {
+                                if(res2.ok) {
+                                    res2.json().then((data2) => {                      
+                                        let newData = data
+                                        newData.moreData = data2
+                                        newData.clicked = false
+                                        resolve(newData)
+                                    })
+                                }
+                            })
+                        })
+                    }
+                    else alert("Le nom ou l'id du pokémon est mauvais")
+                })
+                .catch(function(error) { console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); })
+            })
         },
-        pokemonId(pokemon) {
-            return "N° "+pokemon.id
-        },
-        pokemonName(pokemon) {
-            return pokemon.moreData.names.find(x => x.language.name == this.language).name
-        },
-        pokemonType(type) {
-            return this.capitalize(this.traductionType[type.type.name])
-        },
-        pokemonEnglish(pokemon) {
-            return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name
-        },
-        pokemonHeight(pokemon) {
-            return "Taille : "+(pokemon.height)/10.0 +" m"
-        },
-        pokemonWeight(pokemon) {
-            return "Poids : "+(pokemon.weight)/10.0 +" Kg"
-        },
+        pokemonImage(pokemon) { return pokemon.sprites.other["official-artwork"].front_default },
+        pokemonId(pokemon) { return "N° "+pokemon.id },
+        pokemonName(pokemon) { return pokemon.moreData.names.find(x => x.language.name == this.language).name },
+        pokemonType(type) { return this.capitalize(this.traductionType[type.type.name]) },
+        pokemonEnglish(pokemon) { return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name },
+        pokemonHeight(pokemon) { return "Taille : "+(pokemon.height)/10.0 +" m" },
+        pokemonWeight(pokemon) { return "Poids : "+(pokemon.weight)/10.0 +" Kg" },
         pokemonDesc(pokemon) {
             const entries = pokemon.moreData.flavor_text_entries.filter(x => x.language.name == this.language)
             let entry = ""
@@ -156,12 +135,8 @@ app.component('pokedex-display', {
         pokemonClicked(index) {
             this.pokemons[index].clicked = !this.pokemons[index].clicked
         },
-        sortData(a, b) {
-            this.pokemons.sort(function(a, b) {return a.id - b.id;});
-        },
-        capitalize(str) {
-            return str.charAt(0).toUpperCase() + str.substring(1)
-        }
+        sortData() { this.pokemons.sort(function(a, b) {return a.id - b.id;}); },
+        capitalize(str) { return str.charAt(0).toUpperCase() + str.substring(1) }
     },
     mounted() {
         this.getMorePokemons()

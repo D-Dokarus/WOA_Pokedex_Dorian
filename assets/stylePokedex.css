@@ -101,6 +101,7 @@
         flex-flow: row wrap;
         justify-content: center;
         align-items: center;
+        border: 2px solid black;
     }
     .pokemon-tile.pokemonClick {
         flex-flow: initial;
