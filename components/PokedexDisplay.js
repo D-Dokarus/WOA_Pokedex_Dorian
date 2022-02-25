@@ -2,14 +2,14 @@ app.component('pokedex-display', {
     template:
     /*html*/
     `<div class="pokedex-section">
-        <filter-form @research-pokemon='getPokemon' @change-random='changeRandom'></filter-form>
+        <filter-form @research-pokemon='getPokemon' @change-random='changeRandom' @filter-search='filterPokemons'></filter-form>
         <div class="pokemons-container">
-            <div v-for="(pokemon, index) in pokemons" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked}">
+            <div v-for="(pokemon, index) in pokemons" v-show="!pokemon.hidden" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked}">
                 <div class="pokemon-left" @click="pokemonClicked(index)">
                     <img class="pokemon-image" :src="pokemonImage(pokemon)" :alt="pokemon.name"/>
                     <div class="pokemon-description">
-                        <h2 class="pokemon-name">{{ pokemonName(pokemon) }}</h2>
-                        <h3 class="pokemon-id">{{ pokemonId(pokemon) }}</h3>
+                        <h2>{{ pokemonName(pokemon) }}</h2>
+                        <h3>{{ pokemonId(pokemon) }}</h3>
                         <p v-for="(type, i) in pokemons[index].types" :class="type.type.name">{{ pokemonType(type) }}</p>
                     </div>
                 </div>
@@ -46,6 +46,19 @@ app.component('pokedex-display', {
             this.pokemons = []
             this.getMorePokemons()
         },
+        filterPokemons(value) {
+            if(value.length > 0 && !isNaN(value)) {
+                const id = parseInt(value)
+                for(let pokemon of this.pokemons) {
+                    pokemon.hidden = pokemon.id != id
+                }
+            }
+            else {
+                for(let pokemon of this.pokemons) {
+                    pokemon.hidden = !pokemon.name.toLowerCase().includes(value)
+                }
+            }
+        },
         getPokemon(value) {
             if(value)
                 this.getOnePokemon(value)
@@ -79,7 +92,7 @@ app.component('pokedex-display', {
             })
         },
         getOnePokemon(value) {
-            this.fetchByValue(value).then((data) => {                 
+            this.fetchByValue(value).then((data) => {             
                 this.pokemons = []
                 this.pokemons.push(data)
                 this.currentId = parseInt(value)+1
@@ -94,8 +107,10 @@ app.component('pokedex-display', {
                                 if(res2.ok) {
                                     res2.json().then((data2) => {                      
                                         let newData = data
+                                        newData.name = data2.names.find(x => x.language.name == this.language).name
                                         newData.moreData = data2
                                         newData.clicked = false
+                                        newData.hidden = false
                                         resolve(newData)
                                     })
                                 }
@@ -104,12 +119,12 @@ app.component('pokedex-display', {
                     }
                     else alert("Le nom ou l'id du pokémon est mauvais")
                 })
-                .catch(function(error) { console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); })
+                .catch(error => { console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message); })
             })
         },
         pokemonImage(pokemon) { return pokemon.sprites.other["official-artwork"].front_default },
         pokemonId(pokemon) { return "N° "+pokemon.id },
-        pokemonName(pokemon) { return pokemon.moreData.names.find(x => x.language.name == this.language).name },
+        pokemonName(pokemon) { return pokemon.name },
         pokemonType(type) { return this.capitalize(this.traductionType[type.type.name]) },
         pokemonEnglish(pokemon) { return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name },
         pokemonHeight(pokemon) { return "Taille : "+(pokemon.height)/10.0 +" m" },
