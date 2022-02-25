@@ -10,7 +10,7 @@ app.component('pokedex-display', {
                     <div class="pokemon-description">
                         <h2 class="pokemon-name">{{ pokemonName(pokemon) }}</h2>
                         <h3 class="pokemon-id">{{ pokemonId(pokemon) }}</h3>
-                        <p class="pokemon-type">{{ pokemonType(pokemon) }}</p>
+                        <p v-for="(type, i) in pokemons[index].types" :class="type.type.name">{{ pokemonType(type) }}</p>
                     </div>
                 </div>
                 <div class="pokemon-right">
@@ -29,7 +29,7 @@ app.component('pokedex-display', {
         return {
             pokeapi: 'https://pokeapi.co/api/v2/',
             language: "fr",
-            eachTime: 6,
+            eachTime: 18,
             maxId: 898,
             isRandom: false,
             currentId: 1,
@@ -104,7 +104,7 @@ app.component('pokedex-display', {
                                     newData.clicked = false
                                     this.pokemons = []
                                     this.pokemons.push(newData)
-                                    this.currentId = parseInt(value)
+                                    this.currentId = parseInt(value)+1
                                 })
                             }
                         })
@@ -123,18 +123,8 @@ app.component('pokedex-display', {
         pokemonName(pokemon) {
             return pokemon.moreData.names.find(x => x.language.name == this.language).name
         },
-        pokemonType(pokemon) {
-            let str = "Type :"
-            let compteur = 0
-            for(const t of pokemon.types) {
-                if(compteur)
-                    str += " / "
-                else
-                    str += " "
-                str += this.traductionType[t.type.name]
-                compteur++
-            }
-            return str
+        pokemonType(type) {
+            return this.capitalize(this.traductionType[type.type.name])
         },
         pokemonEnglish(pokemon) {
             return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name
