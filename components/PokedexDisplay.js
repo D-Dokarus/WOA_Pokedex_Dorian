@@ -3,22 +3,16 @@ app.component('pokedex-display', {
     /*html*/
     `<div class="pokedex-section">
         <filter-form @research-pokemon='getPokemon' @change-random='changeRandom' @filter-search='filterPokemons'></filter-form>
-        <div class="pokemons-container">
-            <div v-for="(pokemon, index) in pokemons" v-show="!pokemon.hidden" class="pokemon-tile" :class="{pokemonClick: pokemon.clicked}">
-                <div class="pokemon-left" @click="pokemonClicked(index)">
+
+        <pokemon-details v-show="idPokemonDetail > -1" @closeDetail='pokemonClicked' :pokemonData="Object.assign({},pokemonDetails)"></pokemon-details>
+        <div v-show="idPokemonDetail < 0" class="pokemons-container">
+            <div v-for="(pokemon, index) in pokemons" v-show="!pokemon.hidden" class="pokemon-tile" @click="pokemonClicked(index)">
                     <img class="pokemon-image" :src="pokemonImage(pokemon)" :alt="pokemon.name"/>
                     <div class="pokemon-description">
                         <h2>{{ pokemonName(pokemon) }}</h2>
                         <h3>{{ pokemonId(pokemon) }}</h3>
                         <p v-for="(type, i) in pokemons[index].types" :class="type.type.name">{{ pokemonType(type) }}</p>
                     </div>
-                </div>
-                <div class="pokemon-right">
-                    <p class="pokemon-english">{{ pokemonEnglish(pokemon) }}</p>
-                    <p class="pokemon-height">{{ pokemonHeight(pokemon) }}</p>
-                    <p class="pokemon-weight">{{ pokemonWeight(pokemon) }}</p>
-                    <p class="pokemon-desc">{{ pokemonDesc(pokemon) }}</p>
-                </div>
             </div>
         </div>
         <div class="more-pokemons">
@@ -32,6 +26,8 @@ app.component('pokedex-display', {
             eachTime: 18,
             maxId: 898,
             isRandom: false,
+            pokemonDetails: [],
+            idPokemonDetail: -1,
             currentId: 1,
             pokemons: [],
             traductionType: {"grass":"Plante", "poison":"Poison", "steel":"Acier", "fairy":"Fée", "fire":"Feu", "ice":"Glace", "rock":"Roche",
@@ -126,29 +122,12 @@ app.component('pokedex-display', {
         pokemonId(pokemon) { return "N° "+pokemon.id },
         pokemonName(pokemon) { return pokemon.name },
         pokemonType(type) { return this.capitalize(this.traductionType[type.type.name]) },
-        pokemonEnglish(pokemon) { return "Nom anglais : "+pokemon.moreData.names.find(x => x.language.name == "en").name },
-        pokemonHeight(pokemon) { return "Taille : "+(pokemon.height)/10.0 +" m" },
-        pokemonWeight(pokemon) { return "Poids : "+(pokemon.weight)/10.0 +" Kg" },
-        pokemonDesc(pokemon) {
-            const entries = pokemon.moreData.flavor_text_entries.filter(x => x.language.name == this.language)
-            let entry = ""
-            let as = Object.assign({}, entries.find(x => x.version.name == "alpha-sapphire")).flavor_text
-            entry += as == undefined ? "" : " "+as
-            let or = Object.assign({}, entries.find(x => x.version.name == "omega-ruby")).flavor_text
-            entry += or == undefined || or == as? "" : " "+or
-            let su = Object.assign({}, entries.find(x => x.version.name == "sun")).flavor_text
-            entry += su == undefined ? "" : " "+su
-            let mo = Object.assign({}, entries.find(x => x.version.name == "moon")).flavor_text
-            entry += mo == undefined || mo == su? "" : " "+mo
-            let sh = Object.assign({}, entries.find(x => x.version.name == "shield")).flavor_text
-            entry += sh == undefined ? "" : " "+sh
-            let sw = Object.assign({}, entries.find(x => x.version.name == "sword")).flavor_text
-            entry += sw == undefined || sw == sh? "" : " "+sw
-
-            return entry
-        },
         pokemonClicked(index) {
-            this.pokemons[index].clicked = !this.pokemons[index].clicked
+            this.idPokemonDetail = index
+            if(index)
+                this.pokemonDetails = this.pokemons[index]
+            else
+                this.pokemonDetails = []
         },
         sortData() { this.pokemons.sort(function(a, b) {return a.id - b.id;}); },
         capitalize(str) { return str.charAt(0).toUpperCase() + str.substring(1) }

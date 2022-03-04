@@ -1,0 +1,35 @@
+.cross {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 60px;
+    height: 60px;
+}
+.pokemon-details {
+    border-radius: 10px;
+    background-color: #ff5353;
+    margin: 10px;
+    padding: 5px;
+}
+.container-details {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.pokemon-left .pokemon-image {
+    width: 100%;
+}
+.pokemon-right {
+    margin: 0 auto;
+    padding: 20px;
+    width: 80%;
+    height: 100%;
+
+    background-image: url("./images/Pokedex_Background.png");
+    background-repeat:round;
+    border-radius: 8px;
+
+    overflow-y: hidden;
+}
